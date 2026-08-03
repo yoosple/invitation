@@ -6,7 +6,7 @@ window.INVITATION_CONFIG = {
   site: {
     title: "우리 아이의 첫 번째 생일",
     description: "소중한 분들을 우리 아이의 첫돌에 초대합니다.",
-    shareUrl: "" // 배포 후 예: https://아이디.github.io/저장소이름/
+    shareUrl: "https://yoosple.github.io/invitation/" // 배포 후 예: https://아이디.github.io/저장소이름/
   },
 
   baby: {
