@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8efe8">
+  <meta name="description" content="소중한 첫돌에 초대합니다.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="우리 아이의 첫 번째 생일">
+  <meta property="og:description" content="소중한 첫돌에 초대합니다.">
+  <meta property="og:image" content="assets/images/main.svg">
+  <title>첫돌 초대장</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/main.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header class="hero section">
+      <p class="section-label">FIRST BIRTHDAY</p>
+      <h1><span data-baby-english>SARANG</span><small>첫돌에 초대합니다</small></h1>
+      <figure class="hero-photo">
+        <img data-main-image src="assets/images/main.svg" alt="첫돌 대표 사진">
+      </figure>
+      <strong data-event-date-text></strong>
+      <span data-event-time></span>
+      <p data-place-name></p>
+    </header>
+
+    <main>
+      <section class="section intro reveal">
+        <p class="section-label">INVITATION</p>
+        <h2><span data-baby-name></span>의<br>첫 번째 생일입니다</h2>
+        <p class="multiline" data-message></p>
+        <div class="parents" data-parents></div>
+      </section>
+
+      <section class="section event reveal">
+        <p class="section-label">DATE &amp; PLACE</p>
+        <h2>돌잔치 안내</h2>
+        <div class="event-card">
+          <div><span>날짜</span><strong data-event-date-text></strong></div>
+          <div><span>시간</span><strong data-event-time></strong></div>
+          <div><span>장소</span><strong data-place-name></strong></div>
+          <div><span>주소</span><strong data-address></strong></div>
+          <p data-place-detail></p>
+        </div>
+        <div class="button-group">
+          <a class="button primary" data-kakao-map target="_blank" rel="noopener">카카오맵 보기</a>
+          <a class="button" data-naver-map target="_blank" rel="noopener">네이버지도 보기</a>
+        </div>
+      </section>
+
+      <section class="section countdown reveal">
+        <p class="section-label">COUNTDOWN</p>
+        <h2>첫돌까지 남은 시간</h2>
+        <div class="countdown-grid">
+          <div><strong data-days>00</strong><span>Days</span></div>
+          <div><strong data-hours>00</strong><span>Hours</span></div>
+          <div><strong data-minutes>00</strong><span>Minutes</span></div>
+          <div><strong data-seconds>00</strong><span>Seconds</span></div>
+        </div>
+        <p data-countdown-message></p>
+      </section>
+
+      <section class="section gallery reveal">
+        <p class="section-label">GALLERY</p>
+        <h2>우리 아이의 소중한 순간</h2>
+        <div class="gallery-grid" data-gallery></div>
+      </section>
+
+      <section class="section contact reveal">
+        <p class="section-label">CONTACT</p>
+        <h2>연락하기</h2>
+        <div class="contact-list" data-contacts></div>
+
+      </section>
+
+      <section class="section share reveal">
+        <p class="section-label">SHARE</p>
+        <h2>초대장 공유하기</h2>
+        <button class="button primary wide" type="button" data-share>링크 공유</button>
+        <button class="button wide" type="button" data-copy-link>링크 복사</button>
+      </section>
+    </main>
+
+    <footer>
+      <p data-footer-text></p>
+      <strong><span data-baby-name></span> 첫돌</strong>
+    </footer>
+  </div>
+
+  <dialog class="lightbox" data-lightbox>
+    <button type="button" data-lightbox-close aria-label="닫기">×</button>
+    <img data-lightbox-image alt="확대 사진">
+  </dialog>
+  <div class="toast" data-toast role="status" aria-live="polite"></div>
+</body>
+</html>
