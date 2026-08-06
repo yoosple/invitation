@@ -6,7 +6,7 @@ window.INVITATION_CONFIG = {
   site: {
     title: "우리 아이의 첫 번째 생일",
     description: "소중한 분들을 우리 아이의 첫돌에 초대합니다.",
-    shareUrl: "https://yoosple.github.io/invitation/" // 배포 후 예: https://아이디.github.io/저장소이름/
+    shareUrl: "https://yoosple.github.io/invitation/"
   },
 
   baby: {
@@ -29,8 +29,8 @@ window.INVITATION_CONFIG = {
   },
 
   parents: [
-    { role: "아빠", name: "최명근", phone: "010-3597-7084" },
-    { role: "엄마", name: "유지혜", phone: "010-5049-3740" }
+    { role: "아빠", name: "김아빠", phone: "010-0000-0000" },
+    { role: "엄마", name: "이엄마", phone: "010-0000-0000" }
   ],
 
   accounts: [
@@ -39,12 +39,12 @@ window.INVITATION_CONFIG = {
   ],
 
   gallery: [
-    "assets/images/gallery-01.svg",
-    "assets/images/gallery-02.svg",
-    "assets/images/gallery-03.svg",
-    "assets/images/gallery-04.svg",
-    "assets/images/gallery-05.svg",
-    "assets/images/gallery-06.svg"
+    "assets/images/gallery-01.png",
+    "assets/images/gallery-02.png",
+    "assets/images/gallery-03.png",
+    "assets/images/gallery-04.png",
+    "assets/images/gallery-05.png",
+    "assets/images/gallery-06.png"
   ],
 
   footerText: "귀한 걸음으로 함께해 주시면 감사하겠습니다."
