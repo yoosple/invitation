@@ -29,8 +29,8 @@ window.INVITATION_CONFIG = {
   },
 
   parents: [
-    { role: "아빠", name: "김아빠", phone: "010-0000-0000" },
-    { role: "엄마", name: "이엄마", phone: "010-0000-0000" }
+    { role: "아빠", name: "최명근", phone: "010-0000-0000" },
+    { role: "엄마", name: "유지혜", phone: "010-0000-0000" }
   ],
 
   accounts: [
