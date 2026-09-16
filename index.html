@@ -12,6 +12,19 @@
   <title>첫돌 초대장</title>
   <link rel="stylesheet" href="assets/css/style.css">
   <script src="assets/js/config.js"></script>
+  <script type="module">
+    import {
+        FaceDetector,
+        FilesetResolver
+    } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest";
+
+    window.MediaPipeVision = {
+        FaceDetector,
+        FilesetResolver
+    };
+
+    window.dispatchEvent(new Event("mediapipe-ready"));
+</script>
   <script src="assets/js/main.js" defer></script>
 </head>
 <body>
@@ -84,8 +97,38 @@
   </div>
 
   <dialog class="lightbox" data-lightbox>
-    <button type="button" data-lightbox-close aria-label="닫기">×</button>
-    <img data-lightbox-image alt="확대 사진">
+     <!-- 닫기 -->
+    <button
+        type="button"
+        class="lightbox-close"
+        data-lightbox-close
+        aria-label="닫기">
+        ×
+    </button>
+
+    <!-- 이전 -->
+    <button
+        type="button"
+        class="lightbox-nav lightbox-prev"
+        data-lightbox-prev
+        aria-label="이전 사진">
+        ‹
+    </button>
+
+    <!-- 확대 이미지 -->
+    <img
+        data-lightbox-image
+        alt="확대 사진"
+        draggable="false">
+
+    <!-- 다음 -->
+    <button
+        type="button"
+        class="lightbox-nav lightbox-next"
+        data-lightbox-next
+        aria-label="다음 사진">
+        ›
+    </button>
   </dialog>
   <div class="toast" data-toast role="status" aria-live="polite"></div>
 </body>
