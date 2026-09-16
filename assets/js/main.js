@@ -5,6 +5,17 @@
     constructor(config) {
       this._config = config;
       this._toastTimer = 0;
+  
+      /* Gallery */
+      this._galleryIndex = 0;
+  
+      /* Swipe */
+      this._touchStartX = 0;
+      this._touchEndX = 0;
+  
+      /* Face Detector */
+      this._faceDetector = null;
+      this._faceDetectorPromise = null;
     }
 
     initialize() {
@@ -118,18 +129,338 @@
     }
 
     _renderGallery(images) {
-      const container = document.querySelector("[data-gallery]");
-      if (!container) return;
 
-      container.replaceChildren(...images.map((image, index) => {
-        const button = document.createElement("button");
+    const container =
+        document.querySelector("[data-gallery]");
+
+    if (!container || !Array.isArray(images)) {
+        return;
+    }
+
+    const items = images.map((imageUrl, index) => {
+
+        const button =
+            document.createElement("button");
+
         button.type = "button";
         button.className = "gallery-item";
-        button.setAttribute("aria-label", `사진 ${index + 1} 크게 보기`);
-        button.innerHTML = `<img src="${this._escape(image)}" alt="갤러리 사진 ${index + 1}" loading="lazy">`;
-        button.addEventListener("click", () => this._openLightbox(image));
+
+        button.setAttribute(
+            "aria-label",
+            `사진 ${index + 1} 크게 보기`
+        );
+
+
+        const image =
+            document.createElement("img");
+
+        image.src = imageUrl;
+        image.alt = `갤러리 사진 ${index + 1}`;
+        image.loading = "lazy";
+
+        /*
+         * 얼굴 감지 전에는 중앙.
+         */
+        image.style.objectPosition = "50% 50%";
+
+
+        /*
+         * 이미지 로딩 완료 후
+         * 얼굴 위치 자동 계산
+         */
+        image.addEventListener(
+            "load",
+            () => {
+                this._applyFaceFocus(image);
+            },
+            { once: true }
+        );
+
+
+        button.appendChild(image);
+
+
+        /*
+         * 확대
+         */
+        button.addEventListener("click", () => {
+
+            this._openLightbox(index);
+
+        });
+
+
         return button;
-      }));
+    });
+
+
+    container.replaceChildren(...items);
+}
+    async _initializeFaceDetector() {
+
+    /*
+     * 이미 생성되어 있으면 그대로 사용
+     */
+    if (this._faceDetector) {
+        return this._faceDetector;
+    }
+
+
+    /*
+     * 동시에 여러 이미지가 요청하더라도
+     * detector는 한 번만 생성
+     */
+    if (this._faceDetectorPromise) {
+        return this._faceDetectorPromise;
+    }
+
+
+    this._faceDetectorPromise = (async () => {
+
+        try {
+
+            /*
+             * MediaPipe module이 로딩될 때까지 대기
+             */
+            await this._waitForMediaPipe();
+
+
+            const {
+                FaceDetector,
+                FilesetResolver
+            } = window.MediaPipeVision;
+
+
+            /*
+             * WASM 로딩
+             */
+            const vision =
+                await FilesetResolver.forVisionTasks(
+                    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+                );
+
+
+            /*
+             * 얼굴 감지 모델 생성
+             */
+            this._faceDetector =
+                await FaceDetector.createFromOptions(
+                    vision,
+                    {
+                        baseOptions: {
+                            modelAssetPath:
+                                "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite"
+                        },
+
+                        runningMode: "IMAGE",
+
+                        /*
+                         * 너무 낮으면 잘못된 얼굴을 잡을 수 있음
+                         */
+                        minDetectionConfidence: 0.5
+                    }
+                );
+
+
+            return this._faceDetector;
+
+        } catch (error) {
+
+            console.warn(
+                "얼굴 감지 초기화 실패:",
+                error
+            );
+
+            return null;
+        }
+
+    })();
+
+
+    return this._faceDetectorPromise;
+}
+
+    async _waitForMediaPipe() {
+
+    if (window.MediaPipeVision) {
+        return;
+    }
+
+
+    await new Promise((resolve) => {
+
+        const timeout =
+            window.setTimeout(() => {
+
+                resolve();
+
+            }, 5000);
+
+
+        window.addEventListener(
+            "mediapipe-ready",
+            () => {
+
+                window.clearTimeout(timeout);
+
+                resolve();
+
+            },
+            { once: true }
+        );
+
+    });
+
+
+    if (!window.MediaPipeVision) {
+
+        throw new Error(
+            "MediaPipe 라이브러리를 불러오지 못했습니다."
+        );
+
+    }
+}
+
+    async _applyFaceFocus(image) {
+
+    try {
+
+        const detector =
+            await this._initializeFaceDetector();
+
+
+        /*
+         * MediaPipe 실패 시 중앙
+         */
+        if (!detector) {
+
+            image.style.objectPosition =
+                "50% 50%";
+
+            return;
+        }
+
+
+        /*
+         * 이미지가 정상적으로 로딩되지 않은 경우
+         */
+        if (
+            image.naturalWidth <= 0 ||
+            image.naturalHeight <= 0
+        ) {
+
+            return;
+        }
+
+
+        const result =
+            detector.detect(image);
+
+
+        const detections =
+            result?.detections ?? [];
+
+
+        /*
+         * 얼굴 없음
+         */
+        if (detections.length === 0) {
+
+            image.style.objectPosition =
+                "50% 50%";
+
+            return;
+        }
+
+
+        const focus =
+            this._calculateFaceFocus(
+                detections,
+                image.naturalWidth,
+                image.naturalHeight
+            );
+
+
+        image.style.objectPosition =
+            `${focus.x}% ${focus.y}%`;
+
+
+    } catch (error) {
+
+        console.warn(
+            "얼굴 위치 계산 실패:",
+            error
+        );
+
+
+        /*
+         * 오류 발생해도 갤러리는 정상 표시
+         */
+        image.style.objectPosition =
+            "50% 50%";
+    }
+}
+        _calculateFaceFocus(detections, imageWidth, imageHeight) {
+        let minX = Number.POSITIVE_INFINITY;
+        let minY = Number.POSITIVE_INFINITY;
+        let maxX = Number.NEGATIVE_INFINITY;
+        let maxY = Number.NEGATIVE_INFINITY;
+
+        detections.forEach((detection) => {
+            const box = detection.boundingBox;
+
+            if (!box) {
+                return;
+            }
+
+            const left = box.originX;
+            const top = box.originY;
+            const right = left + box.width;
+            const bottom = top + box.height;
+
+            minX = Math.min(minX, left);
+            minY = Math.min(minY, top);
+            maxX = Math.max(maxX, right);
+            maxY = Math.max(maxY, bottom);
+        });
+
+        if (
+            !Number.isFinite(minX) ||
+            !Number.isFinite(minY) ||
+            !Number.isFinite(maxX) ||
+            !Number.isFinite(maxY)
+        ) {
+            return {
+                x: 50,
+                y: 50
+            };
+        }
+
+        // 여러 얼굴이 있으면 얼굴 전체 영역의 중앙
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+
+        // 얼굴만 가운데 오지 않고 상체도 조금 보이도록
+        const faceGroupHeight = maxY - minY;
+        const adjustedY = centerY + (faceGroupHeight * 0.2);
+
+        let x = (centerX / imageWidth) * 100;
+        let y = (adjustedY / imageHeight) * 100;
+
+        x = this._clamp(x, 10, 90);
+        y = this._clamp(y, 10, 90);
+
+        return {
+            x: Math.round(x * 10) / 10,
+            y: Math.round(y * 10) / 10
+        };
+    }
+
+    _clamp(value, min, max) {
+        return Math.min(
+            Math.max(value, min),
+            max
+        );
     }
 
     _initializeCountdown() {
@@ -158,21 +489,202 @@
       window.setInterval(update, 1000);
     }
 
-    _initializeGallery() {
-      const dialog = document.querySelector("[data-lightbox]");
-      document.querySelector("[data-lightbox-close]")?.addEventListener("click", () => dialog?.close());
-      dialog?.addEventListener("click", (event) => {
-        if (event.target === dialog) dialog.close();
-      });
+        _initializeGallery() {
+        const dialog = document.querySelector("[data-lightbox]");
+
+        if (!dialog) {
+            return;
+        }
+
+        const closeButton =
+            document.querySelector("[data-lightbox-close]");
+
+        const previousButton =
+            document.querySelector("[data-lightbox-prev]");
+
+        const nextButton =
+            document.querySelector("[data-lightbox-next]");
+
+        // 닫기
+        closeButton?.addEventListener("click", (event) => {
+            event.stopPropagation();
+            this._closeLightbox();
+        });
+
+        // 이전
+        previousButton?.addEventListener("click", (event) => {
+            event.stopPropagation();
+            this._showPreviousGalleryImage();
+        });
+
+        // 다음
+        nextButton?.addEventListener("click", (event) => {
+            event.stopPropagation();
+            this._showNextGalleryImage();
+        });
+
+        // 검은 배경 클릭하면 닫기
+        dialog.addEventListener("click", (event) => {
+            if (event.target === dialog) {
+                this._closeLightbox();
+            }
+        });
+
+        // 키보드
+        document.addEventListener("keydown", (event) => {
+            if (!dialog.open) {
+                return;
+            }
+
+            if (event.key === "ArrowLeft") {
+                this._showPreviousGalleryImage();
+            }
+
+            if (event.key === "ArrowRight") {
+                this._showNextGalleryImage();
+            }
+
+            if (event.key === "Escape") {
+                this._closeLightbox();
+            }
+        });
+
+        // 모바일 Swipe 시작
+        dialog.addEventListener(
+            "touchstart",
+            (event) => {
+                const touch = event.changedTouches?.[0];
+
+                if (!touch) {
+                    return;
+                }
+
+                this._touchStartX = touch.clientX;
+            },
+            { passive: true }
+        );
+
+        // 모바일 Swipe 종료
+        dialog.addEventListener(
+            "touchend",
+            (event) => {
+                const touch = event.changedTouches?.[0];
+
+                if (!touch) {
+                    return;
+                }
+
+                this._touchEndX = touch.clientX;
+
+                const difference =
+                    this._touchEndX - this._touchStartX;
+
+                // 50px 미만 움직임은 무시
+                if (Math.abs(difference) < 50) {
+                    return;
+                }
+
+                // 오른쪽으로 밀기 → 이전
+                if (difference > 0) {
+                    this._showPreviousGalleryImage();
+                }
+                // 왼쪽으로 밀기 → 다음
+                else {
+                    this._showNextGalleryImage();
+                }
+            },
+            { passive: true }
+        );
     }
 
-    _openLightbox(imageUrl) {
-      const dialog = document.querySelector("[data-lightbox]");
-      const image = document.querySelector("[data-lightbox-image]");
-      if (!dialog || !image) return;
+    _openLightbox(index) {
+        const dialog =
+            document.querySelector("[data-lightbox]");
 
-      image.src = imageUrl;
-      if (typeof dialog.showModal === "function") dialog.showModal();
+        if (!dialog) {
+            return;
+        }
+
+        this._galleryIndex = index;
+
+        this._updateLightboxImage();
+
+        if (
+            typeof dialog.showModal === "function" &&
+            !dialog.open
+        ) {
+            dialog.showModal();
+        }
+    }
+
+    _updateLightboxImage() {
+        const image =
+            document.querySelector("[data-lightbox-image]");
+
+        const gallery =
+            this._config.gallery;
+
+        if (
+            !image ||
+            !Array.isArray(gallery) ||
+            gallery.length === 0
+        ) {
+            return;
+        }
+
+        image.src = gallery[this._galleryIndex];
+        image.alt = `확대 사진 ${this._galleryIndex + 1}`;
+    }
+
+    _closeLightbox() {
+        const dialog =
+            document.querySelector("[data-lightbox]");
+
+        if (dialog?.open) {
+            dialog.close();
+        }
+    }
+
+    _showPreviousGalleryImage() {
+        const gallery =
+            this._config.gallery;
+
+        if (
+            !Array.isArray(gallery) ||
+            gallery.length === 0
+        ) {
+            return;
+        }
+
+        this._galleryIndex--;
+
+        // 첫 번째에서 이전을 누르면 마지막으로
+        if (this._galleryIndex < 0) {
+            this._galleryIndex = gallery.length - 1;
+        }
+
+        this._updateLightboxImage();
+    }
+
+    _showNextGalleryImage() {
+        const gallery =
+            this._config.gallery;
+
+        if (
+            !Array.isArray(gallery) ||
+            gallery.length === 0
+        ) {
+            return;
+        }
+
+        this._galleryIndex++;
+
+        // 마지막에서 다음을 누르면 첫 번째로
+        if (this._galleryIndex >= gallery.length) {
+            this._galleryIndex = 0;
+        }
+
+        this._updateLightboxImage();
     }
 
     _initializeAccounts() {
