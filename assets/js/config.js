@@ -14,7 +14,7 @@ window.INVITATION_CONFIG = {
     englishName: "SOJEONG",
     eventDate: "2026-10-10",
     eventTime: "오후 12시 00분",
-    mainImage: "assets/images/main.svg",
+    mainImage: "assets/images/main.jpg",
     message: `사랑으로 키운 소중한 아이가
 어느덧 첫 번째 생일을 맞았습니다.
 기쁜 날 함께 축복해 주세요.`
