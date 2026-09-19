@@ -50,7 +50,10 @@ window.INVITATION_CONFIG = {
     "assets/images/gallery-09.png",
     "assets/images/gallery-10.png",
     "assets/images/gallery-11.png",
-    "assets/images/gallery-12.png"
+    "assets/images/gallery-12.png",
+    "assets/images/gallery-13.png",
+    "assets/images/gallery-14.png",
+    "assets/images/gallery-15.png"
   ],
 
   footerText: "귀한 걸음으로 함께해 주시면 감사하겠습니다."
